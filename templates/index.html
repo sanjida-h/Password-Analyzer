@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Password Analyzer</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+    <h1 class="page-title">PASSWORD ANALYZER</h1>
+
+    <div class="insight-carousel">
+        <div class="insight-slide active"><strong>Why 12+?</strong> Modern hardware can crack short passwords in seconds. Longer passwords are far harder to break.</div>
+        <div class="insight-slide"><strong>The "Pwned" Check:</strong> Your password is checked against billions of leaked credentials to see if it has already been exposed.</div>
+        <div class="insight-slide"><strong>Passphrases:</strong> Simple phrases like <em>Robot Apple Sky</em> are easier to remember and much harder to crack.</div>
+        <div class="insight-slide"><strong>Length Matters:</strong> A longer password like <em>coffeeTableWindow</em> is stronger than a short complex one.</div>
+        <div class="insight-slide"><strong>Password Reuse:</strong> Using the same password on multiple sites means one breach can unlock everything.</div>
+        <div class="insight-slide"><strong>Brute Force:</strong> Attackers use powerful systems that can try billions of guesses every second.</div>          <div class="insight-slide"><strong>Common Patterns:</strong> Passwords like <em>Password123</em> or <em>Welcome1</em> are cracked almost instantly.</div>
+        <div class="insight-slide"><strong>Personal Info:</strong> Names, birthdays, or things like <em>John2005</em> are easy for attackers to guess.</div>
+        <div class="insight-slide"><strong>Keyboard Patterns:</strong> Sequences like <em>qwerty</em> or <em>123456</em> are among the first guesses.</div>
+        <div class="insight-slide"><strong>Symbols Help:</strong> Adding symbols like <em>!</em> or <em>@</em> increases the number of possible combinations.</div>
+        <div class="insight-slide"><strong>Password Managers:</strong> Tools can generate and store strong passwords so you do not have to remember them.</div>
+        <div class="insight-slide"><strong>Dictionary Attacks:</strong> Attackers test huge lists of real words, not just random guesses.</div>
+        <div class="insight-slide"><strong>Time to Crack:</strong> Adding just a few extra characters can turn seconds into years.</div>
+        <div class="insight-slide"><strong>Case Sensitivity:</strong> Mixing uppercase and lowercase letters makes passwords harder to predict.</div>
+        <div class="insight-slide"><strong>Data Breaches:</strong> Billions of real passwords are already exposed and reused in attacks.</div>
+        <div class="insight-slide"><strong>Automation:</strong> Attacks run automatically and can test thousands of passwords in moments.</div>
+        <div class="insight-slide"><strong>Unpredictability:</strong> The less your password looks like a real word, the safer it is.</div>
+        <div class="insight-slide"><strong>Unique Passwords:</strong> Every account should have its own password to stay secure.</div>
+        <div class="insight-slide"><strong>Real Risk:</strong> Most hacked accounts come from weak or reused passwords.</div>
+        <div class="insight-slide"><strong>Try It Yourself:</strong> Enter common leaked passwords like <em>123456</em>, <em>password</em>, or <em>qwerty</em> and watch how fast they are cracked.</div>
+    </div>
+
+    <div class="main-wrapper">
+        <div class="container">
+            <form method="POST">
+                <input type="hidden" name="show_password" id="showPassHidden" value="{{ show_password or 'false' }}">
+
+                <div class="input-row">
+                    <input type="{{ 'text' if show_password == 'true' else 'password' }}" 
+                           name="password" id="passInput" class="main-input" 
+                           placeholder="Type or Generate..." value="{{ password }}" 
+                           onkeydown="if(event.keyCode==32) return false;">
+                    
+                    <div class="input-icons">
+                        <button type="button" class="icon-btn" onclick="toggleView()" title="Show/Hide">
+                            <span id="eye">{{ '👁️' if show_password == 'true' else '🙈' }}</span>
+                        </button>
+                        <button type="button" class="icon-btn" onclick="copyText()" title="Copy">📋</button>
+                    </div>
+                    <button type="submit" name="action" value="check" class="btn-check">Check</button>
+                </div>
+
+                <div class="strength-bar">
+                    {% if analysis %}<div class="strength-fill score-{{ analysis.score }}">{{ analysis.label }}</div>{% endif %}
+                </div>
+
+                <div class="checklist">
+                    <strong>{% if analysis %}{{ analysis.length }}{% else %}0{% endif %} characters:</strong>
+                    <span class="{% if analysis and analysis.has_upper %}ok{% endif %}">Uppercase</span>
+                    <span class="{% if analysis and analysis.has_lower %}ok{% endif %}">Lowercase</span>
+                    <span class="{% if analysis and analysis.has_digits %}ok{% endif %}">Numbers</span>
+                    <span class="{% if analysis and analysis.has_symbols %}ok{% endif %}">Symbols</span>
+                </div>
+
+                <div class="options">
+                    <label><input type="checkbox" name="upper" {% if upper == 'on' %}checked{% endif %}> Uppercase</label>
+                    <label><input type="checkbox" name="lower" {% if lower == 'on' %}checked{% endif %}> Lowercase</label>
+                    <label><input type="checkbox" name="digits" {% if digits == 'on' %}checked{% endif %}> Numbers</label>
+                    <label><input type="checkbox" name="symbols" {% if symbols == 'on' %}checked{% endif %}> Symbols</label>
+                    <label style="grid-column: span 2;"><input type="checkbox" name="memorable" {% if memorable == 'on' %}checked{% endif %}> Memorable Passphrase</label>
+                </div>
+
+                <div style="margin-bottom: 20px;">
+                    Target Length: <span id="lenVal" style="font-weight: bold;">{{ length }}</span><br>
+                    <input type="range" name="length" min="8" max="64" value="{{ length }}" style="width:100%" oninput="document.getElementById('lenVal').textContent=this.value">
+                </div>
+
+                <div class="actions">
+                    <button type="submit" name="action" value="generate" class="btn-action">Generate</button>
+                    <button type="submit" name="action" value="auto" class="btn-action">Auto generate</button>
+                </div>
+
+                {% if analysis %}
+                <div class="results">
+                    {% if analysis.pwned > 0 %}<div class="danger-msg">⚠️ Found in {{ analysis.pwned }} breaches!</div>{% endif %}
+                    <p style="margin:0; color:#535252;">Time to crack</p>
+                    <div class="crack-time">{{ analysis.crack }}</div>
+                    <p>
+                      <strong>Feedback:</strong> 
+                      <em class="{% if analysis.pwned > 0 %}danger-msg{% endif %}">
+                          {{ analysis.feedback }}
+                      </em>
+                    </p>
+                    
+                </div>
+                {% endif %}
+            </form>
+        </div>
+    </div>
+
+    <script>
+        //rotation logic
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.insight-slide');
+        function rotateInsights() {
+            slides[currentSlide].classList.remove('active');
+            currentSlide = (currentSlide + 1) % slides.length;
+            slides[currentSlide].classList.add('active');
+        }
+        setInterval(rotateInsights, 6000);
+
+        //toggle logic = visibility 
+        function toggleView() {
+            var x = document.getElementById("passInput");
+            var e = document.getElementById("eye");
+            var hiddenInput = document.getElementById("showPassHidden");
+
+            if (x.type === "password") {
+                x.type = "text";
+                e.textContent = "👁️";
+                hiddenInput.value = "true"; 
+            } else {
+                x.type = "password";
+                e.textContent = "🙈";
+                hiddenInput.value = "false"; 
+            }
+        }
+
+        function copyText() {
+            var copyText = document.getElementById("passInput");
+            var originalType = copyText.type;
+            copyText.type = "text"; 
+            copyText.select();
+            document.execCommand("copy");
+            copyText.type = originalType;
+            alert("Copied!");
+        }
+
+        document.getElementById('passInput').addEventListener('input', function() {
+            const val = this.value;
+            document.querySelector('.checklist strong').textContent = val.length + " characters:";
+            const spans = document.querySelectorAll('.checklist span');
+            spans[0].classList.toggle('ok', /[A-Z]/.test(val));
+            spans[1].classList.toggle('ok', /[a-z]/.test(val));
+            spans[2].classList.toggle('ok', /[0-9]/.test(val));
+            spans[3].classList.toggle('ok', /[^A-Za-z0-9]/.test(val));
+        });
+    </script>
+</body>
+</html>
